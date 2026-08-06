@@ -1,0 +1,312 @@
+// app/admin/page.tsx — daftar data sertifikat + generate + download
+
+"use client";
+
+import * as React from "react";
+import { useRouter } from "next/navigation";
+import { Download, FileText, Loader2, RefreshCw, Settings2, Sparkles, Zap } from "lucide-react";
+import { supabaseClient } from "@/lib/supabase";
+import { AnimatedNumber, Reveal, Stagger, StaggerItem } from "@/components/motion";
+
+interface CertRow {
+  feedback_id: string;
+  nama: string;
+  program: string;
+  bagian: string;
+  sub_bagian: string | null;
+  tgl_awal: string;
+  tgl_akhir: string;
+  created_at: string;
+}
+
+interface GenInfo {
+  status: string;
+  storage_path: string;
+  created_at: string;
+}
+
+export default function AdminPage() {
+  const router = useRouter();
+  const [rows, setRows] = React.useState<CertRow[]>([]);
+  const [generated, setGenerated] = React.useState<Record<string, GenInfo>>({});
+  const [loading, setLoading] = React.useState(true);
+  const [genLoading, setGenLoading] = React.useState<string | null>(null);
+  const [batchLoading, setBatchLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [search, setSearch] = React.useState("");
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+    try {
+      const r = await fetch("/api/sertifikat/feedback");
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "Gagal load data");
+      setRows(d.rows ?? []);
+      setGenerated(d.generated ?? {});
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  React.useEffect(() => {
+    // AuthGuard (layout) udah handle login — langsung load
+    load();
+    const timer = setInterval(load, 30_000); // polling 30s
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function generate(id: string) {
+    setGenLoading(id);
+    setError(null);
+    try {
+      const r = await fetch("/api/sertifikat/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feedback_id: id, scale: 3 }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "Gagal generate");
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setGenLoading(null);
+    }
+  }
+
+  async function download(id: string) {
+    const g = generated[id];
+    if (!g?.storage_path) return;
+    const clean = g.storage_path.replace(/^hasil\//, "");
+    if (!supabaseClient) return;
+    const { data } = await supabaseClient.storage.from("hasil").createSignedUrl(clean, 300);
+    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+  }
+
+  /** Batch: generate semua (belum punya) + download ZIP */
+  async function generateAll() {
+    if (!confirm("Generate semua sertifikat & download ZIP? Ini bisa makan waktu 1-2 detik per sertifikat.")) return;
+    setBatchLoading(true);
+    setError(null);
+    try {
+      const r = await fetch("/api/sertifikat/generate-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scale: 3 }),
+      });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        throw new Error(d.error || "Batch gagal");
+      }
+      // download ZIP dari response
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `sertifikat_all_3x_${Date.now()}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBatchLoading(false);
+    }
+  }
+
+  const filtered = rows.filter(
+    (r) =>
+      r.nama.toLowerCase().includes(search.toLowerCase()) ||
+      r.program.toLowerCase().includes(search.toLowerCase()) ||
+      r.bagian.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <main className="min-h-screen bg-zinc-50">
+      {/* topbar */}
+      <header className="border-b border-zinc-200 bg-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+          <div>
+            <h1 className="text-lg font-semibold text-zinc-900">Sertifikat Magang</h1>
+            <p className="text-xs text-zinc-500">PG Djatiroto — generator sertifikat otomatis</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push("/admin/sertifikat/settings")}
+              className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-50"
+            >
+              <Settings2 className="h-3.5 w-3.5" /> Settings
+            </button>
+            <button
+              onClick={load}
+              className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-50"
+            >
+              <RefreshCw className="h-3.5 w-3.5" /> Refresh
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-6xl px-4 py-6">
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        {/* summary strip */}
+        <Stagger className="mb-5 grid grid-cols-3 gap-3">
+          <StaggerItem>
+            <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-400">Total Data</p>
+              <p className="mt-1 text-2xl font-semibold text-zinc-900">
+                <AnimatedNumber value={rows.length} />
+              </p>
+            </div>
+          </StaggerItem>
+          <StaggerItem>
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-sm">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-emerald-600">Sertifikat Terbit</p>
+              <p className="mt-1 text-2xl font-semibold text-emerald-700">
+                <AnimatedNumber value={rows.filter((r) => generated[r.feedback_id]?.status === "ok").length} />
+              </p>
+            </div>
+          </StaggerItem>
+          <StaggerItem>
+            <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-400">Belum Generate</p>
+              <p className="mt-1 text-2xl font-semibold text-zinc-900">
+                <AnimatedNumber value={rows.filter((r) => !generated[r.feedback_id]?.status).length} />
+              </p>
+            </div>
+          </StaggerItem>
+        </Stagger>
+
+        {/* search + batch */}
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Cari nama, program, bagian…"
+            className="w-full max-w-md rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+          />
+          <button
+            onClick={generateAll}
+            disabled={batchLoading || rows.length === 0}
+            className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {batchLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+            {batchLoading ? "Generate…" : "Generate Semua + ZIP"}
+          </button>
+        </div>
+
+        {/* table */}
+        <Reveal>
+          <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500">
+                <tr>
+                  <th className="px-4 py-3 font-medium">No</th>
+                  <th className="px-4 py-3 font-medium">Nama</th>
+                  <th className="px-4 py-3 font-medium">Program</th>
+                  <th className="px-4 py-3 font-medium">Bagian</th>
+                  <th className="px-4 py-3 font-medium">Periode</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {loading && (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-10 text-center text-zinc-400">
+                      <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" />
+                      Memuat data…
+                    </td>
+                  </tr>
+                )}
+                {!loading && filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-10 text-center text-zinc-400">
+                      <FileText className="mx-auto mb-2 h-6 w-6 opacity-40" />
+                      Belum ada data feedback. Isi form feedback dulu.
+                    </td>
+                  </tr>
+                )}
+                {!loading &&
+                  filtered.map((r, i) => {
+                    const gen = generated[r.feedback_id];
+                    return (
+                      <tr key={r.feedback_id} className="transition hover:bg-zinc-50/70">
+                        <td className="px-4 py-3 text-zinc-400">{i + 1}</td>
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-zinc-900">{r.nama}</div>
+                          {r.sub_bagian && <div className="text-xs text-zinc-400">{r.sub_bagian}</div>}
+                        </td>
+                        <td className="px-4 py-3 text-zinc-600">{r.program}</td>
+                        <td className="px-4 py-3 text-zinc-600">{r.bagian}</td>
+                        <td className="px-4 py-3 text-xs text-zinc-500">
+                          {r.tgl_awal} → {r.tgl_akhir}
+                        </td>
+                        <td className="px-4 py-3">
+                          {gen ? (
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                                gen.status === "ok"
+                                  ? "bg-emerald-50 text-emerald-700"
+                                  : "bg-red-50 text-red-700"
+                              }`}
+                            >
+                              {gen.status === "ok" ? "✓ Terbit" : "✗ Error"}
+                            </span>
+                          ) : (
+                            <span className="inline-flex rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500">
+                              Belum
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {gen?.status === "ok" && (
+                              <button
+                                onClick={() => download(r.feedback_id)}
+                                className="flex items-center gap-1 rounded-lg bg-zinc-100 px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-200"
+                                title="Download PNG"
+                              >
+                                <Download className="h-3.5 w-3.5" /> PNG
+                              </button>
+                            )}
+                            <button
+                              onClick={() => generate(r.feedback_id)}
+                              disabled={genLoading === r.feedback_id}
+                              className="flex items-center gap-1 rounded-lg bg-indigo-600 px-2.5 py-1.5 text-xs font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
+                            >
+                              {genLoading === r.feedback_id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Sparkles className="h-3.5 w-3.5" />
+                              )}
+                              {gen ? "Generate Ulang" : "Generate"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        </Reveal>
+
+        <p className="mt-3 text-xs text-zinc-400">
+          {filtered.length} data · polling otomatis tiap 30 detik
+        </p>
+      </div>
+    </main>
+  );
+}

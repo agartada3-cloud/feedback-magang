@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, LogOut, Menu, Table2, X } from "lucide-react";
+import { Award, LayoutDashboard, LogOut, Menu, Table2, X } from "lucide-react";
 import ThemeToggle from "@/components/theme-toggle";
 import { logoutAdmin } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/submissions", label: "Submissions", icon: Table2 },
+  { href: "/admin/sertifikat", label: "Sertifikat", icon: Award },
 ];
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {

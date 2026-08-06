@@ -3,6 +3,23 @@
 /* Dark mode class-based (Tailwind v4) */
 @custom-variant dark (&:is(.dark *));
 
+/* font bundle sertifikat — preview browser (CSS @font-face dari public/fonts) */
+@font-face {
+  font-family: "GlacialIndifference-Bold";
+  src: url("/fonts/glacial-bold.otf") format("opentype");
+  font-weight: normal;
+}
+@font-face {
+  font-family: "OpenSauceSans-Bold";
+  src: url("/fonts/opensauce-bold.ttf") format("truetype");
+  font-weight: normal;
+}
+@font-face {
+  font-family: "OpenSauceSans-Regular";
+  src: url("/fonts/opensauce-regular.ttf") format("truetype");
+  font-weight: normal;
+}
+
 /* ============================================================
    Hallmark · app: feedback-magang · surface: Operate/Configure
    theme: custom (vibe: "form + admin, indigo on zinc") 

@@ -14,6 +14,9 @@ const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export const supabase = url && anonKey ? createClient(url, anonKey) : null;
 
+/** Alias buat komponen sertifikat (supabaseClient) — pakai client yang sama */
+export const supabaseClient = supabase;
+
 export const isSupabaseConfigured = () => supabase !== null;
 
 /* ---------- types mapping (snake_case DB ↔ camelCase app) ---------- */
