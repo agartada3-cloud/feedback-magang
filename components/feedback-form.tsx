@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { Button, FormField, Input, Progress, Select, Textarea } from "@/components/ui";
+import { StepTransition } from "@/components/motion";
 import { createSubmission } from "@/lib/store";
 import type { FeedbackFormData } from "@/lib/types";
 
@@ -204,6 +205,7 @@ export default function FeedbackForm() {
         />
 
         {step === 0 && (
+          <StepTransition stepKey={0}>
           <div className="space-y-5">
             <div className="rounded-lg border border-border bg-muted/50 px-4 py-3 text-xs text-muted-foreground">
               Data di bawah ini akan digunakan <span className="font-medium text-foreground">secara persis</span> untuk penerbitan sertifikat. Pastikan penulisan sesuai identitas & surat resmi kampus.
@@ -261,9 +263,11 @@ export default function FeedbackForm() {
               <Input placeholder="Nama program di surat resmi" {...form.register("namaProgramSurat")} />
             </FormField>
           </div>
+          </StepTransition>
         )}
 
         {step === 1 && (
+          <StepTransition stepKey={1}>
           <div className="space-y-5">
             <FormField label="Penilaian Pengalaman Secara Umum" required error={form.formState.errors.rating?.message}>
               <div className="grid gap-2 sm:grid-cols-2">
@@ -295,9 +299,11 @@ export default function FeedbackForm() {
               <Textarea placeholder="Opsional" {...form.register("saran")} />
             </FormField>
           </div>
+          </StepTransition>
         )}
 
         {step === 2 && (
+          <StepTransition stepKey={2}>
           <div className="space-y-5">
             <div className="rounded-lg border border-border bg-muted/50 px-4 py-4">
               <label className="flex cursor-pointer items-start gap-3">
@@ -319,6 +325,7 @@ export default function FeedbackForm() {
               Setelah dikirim, Anda akan menerima <span className="font-medium text-foreground">nomor referensi</span> sebagai bukti pengisian form.
             </div>
           </div>
+          </StepTransition>
         )}
 
         {submitError && (

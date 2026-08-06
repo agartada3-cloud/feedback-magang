@@ -155,10 +155,10 @@ export default function SubmissionsTable() {
             <option>Proses</option>
             <option>Terbit</option>
           </Select>
-          <div className="flex items-center gap-1.5">
-            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label="Dari tanggal" />
-            <span className="text-muted-foreground">–</span>
-            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label="Sampai tanggal" />
+          <div className="grid grid-cols-2 items-center gap-1.5 sm:flex sm:items-center">
+            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label="Dari tanggal" className="min-w-0" />
+            <span className="text-center text-muted-foreground">–</span>
+            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label="Sampai tanggal" className="min-w-0" />
           </div>
         </CardContent>
       </Card>
@@ -220,15 +220,15 @@ export default function SubmissionsTable() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-border px-4 py-3">
+          <div className="flex flex-col items-center justify-between gap-3 border-t border-border px-4 py-3 sm:flex-row">
             <p className="text-xs text-muted-foreground">
               Halaman {page} dari {totalPages}
             </p>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+            <div className="flex w-full gap-2 sm:w-auto">
+              <Button variant="outline" size="sm" className="flex-1 sm:flex-none" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
                 Sebelumnya
               </Button>
-              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+              <Button variant="outline" size="sm" className="flex-1 sm:flex-none" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
                 Selanjutnya
               </Button>
             </div>

@@ -17,7 +17,7 @@ const STATUS_TONE: Record<StatusSertifikat, "info" | "warning" | "success"> = {
 function DetailRow({ label, value }: { label: string; value?: string }) {
   if (!value) return null;
   return (
-    <div className="grid grid-cols-[140px_1fr] gap-2 py-2 text-sm">
+    <div className="grid grid-cols-1 gap-0.5 py-2 text-sm sm:grid-cols-[140px_1fr] sm:gap-2">
       <dt className="text-muted-foreground">{label}</dt>
       <dd className="text-foreground">{value}</dd>
     </div>
