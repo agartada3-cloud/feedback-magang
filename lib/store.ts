@@ -112,6 +112,14 @@ export async function updateStatus(id: string, status: StatusSertifikat): Promis
   }
 }
 
+export async function deleteSubmissions(ids: string[]): Promise<void> {
+  // Supabase: supabase.from("submissions").delete().in("id", ids)
+  if (!ids.length) return;
+  const items = readAll();
+  const keep = items.filter((s) => !ids.includes(s.id));
+  writeAll(keep);
+}
+
 export async function getStats(): Promise<Stats> {
   const items = readAll();
   const now = new Date();

@@ -2,9 +2,10 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Download, Search } from "lucide-react";
+import { Download, Search, Trash2 } from "lucide-react";
 import { Badge, Button, Card, CardContent, EmptyState, Input, Select } from "@/components/ui";
-import { listSubmissions } from "@/lib/store";
+import { DatePicker, MonthPicker } from "@/components/date-picker";
+import { deleteSubmissions, listSubmissions } from "@/lib/store";
 import type { StatusSertifikat, Submission } from "@/lib/types";
 import { cn, formatDate } from "@/lib/utils";
 
@@ -16,24 +17,37 @@ const STATUS_TONE: Record<StatusSertifikat, "info" | "warning" | "success"> = {
   Terbit: "success",
 };
 
+const RATINGS = ["Sangat Baik", "Baik", "Cukup", "Kurang"] as const;
+const JENIS = ["Magang", "Penelitian", "Praktik Kerja Lapangan (PKL)", "Lainnya"] as const;
+const BAGIAN = ["Keuangan dan Umum", "Quality Assurance", "Tanaman TR", "Teknik", "Pengolahan"] as const;
+
 export default function SubmissionsTable() {
   const [items, setItems] = React.useState<Submission[]>([]);
   const [query, setQuery] = React.useState("");
   const [jenis, setJenis] = React.useState("");
   const [bagian, setBagian] = React.useState("");
   const [status, setStatus] = React.useState("");
+  const [rating, setRating] = React.useState("");
+  const [bulan, setBulan] = React.useState("");
   const [from, setFrom] = React.useState("");
   const [to, setTo] = React.useState("");
   const [page, setPage] = React.useState(1);
   const [sortKey, setSortKey] = React.useState<keyof Submission>("createdAt");
   const [sortDir, setSortDir] = React.useState<"asc" | "desc">("desc");
+  const [selected, setSelected] = React.useState<Set<string>>(new Set());
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
 
-  React.useEffect(() => {
+  const load = React.useCallback(() => {
     listSubmissions().then(setItems);
   }, []);
 
+  React.useEffect(() => {
+    load();
+  }, [load]);
+
   /* reset halaman kalau filter berubah */
-  React.useEffect(() => setPage(1), [query, jenis, bagian, status, from, to]);
+  React.useEffect(() => setPage(1), [query, jenis, bagian, status, rating, bulan, from, to]);
 
   const filtered = React.useMemo(() => {
     let rows = [...items];
@@ -51,6 +65,8 @@ export default function SubmissionsTable() {
     if (jenis) rows = rows.filter((s) => s.jenisProgram === jenis);
     if (bagian) rows = rows.filter((s) => s.bagian === bagian);
     if (status) rows = rows.filter((s) => s.statusSertifikat === status);
+    if (rating) rows = rows.filter((s) => s.rating === rating);
+    if (bulan) rows = rows.filter((s) => s.createdAt.slice(0, 7) === bulan);
     if (from) rows = rows.filter((s) => s.createdAt.slice(0, 10) >= from);
     if (to) rows = rows.filter((s) => s.createdAt.slice(0, 10) <= to);
 
@@ -61,7 +77,7 @@ export default function SubmissionsTable() {
       return sortDir === "asc" ? cmp : -cmp;
     });
     return rows;
-  }, [items, query, jenis, bagian, status, from, to, sortKey, sortDir]);
+  }, [items, query, jenis, bagian, status, rating, bulan, from, to, sortKey, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -73,6 +89,35 @@ export default function SubmissionsTable() {
       setSortKey(key);
       setSortDir("desc");
     }
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelected((prev) => {
+      if (prev.size === pageRows.length && pageRows.every((r) => prev.has(r.id))) {
+        return new Set();
+      }
+      return new Set(pageRows.map((r) => r.id));
+    });
+  }
+
+  async function handleDelete() {
+    const ids = [...selected];
+    if (!ids.length) return;
+    setDeleting(true);
+    await deleteSubmissions(ids);
+    setSelected(new Set());
+    setConfirmDelete(false);
+    setDeleting(false);
+    load();
   }
 
   function exportCsv() {
@@ -101,7 +146,7 @@ export default function SubmissionsTable() {
     URL.revokeObjectURL(url);
   }
 
-  const filterActive = query || jenis || bagian || status || from || to;
+  const filterActive = query || jenis || bagian || status || rating || bulan || from || to;
 
   return (
     <div className="space-y-4">
@@ -116,16 +161,29 @@ export default function SubmissionsTable() {
             )}
           </p>
         </div>
-        <Button variant="outline" onClick={exportCsv} disabled={!filtered.length}>
-          <Download className="h-4 w-4" aria-hidden />
-          Export CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          {selected.size > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setConfirmDelete(true)}
+              className="min-h-[40px]"
+            >
+              <Trash2 className="h-4 w-4" aria-hidden />
+              Hapus ({selected.size})
+            </Button>
+          )}
+          <Button variant="outline" onClick={exportCsv} disabled={!filtered.length}>
+            <Download className="h-4 w-4" aria-hidden />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       {/* Filter bar */}
       <Card>
-        <CardContent className="grid gap-3 pt-4 md:grid-cols-2 xl:grid-cols-6">
-          <div className="relative xl:col-span-2">
+        <CardContent className="grid gap-3 pt-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+          <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
             <Input
               placeholder="Cari nama, universitas, jurusan, WA…"
@@ -136,18 +194,11 @@ export default function SubmissionsTable() {
           </div>
           <Select value={jenis} onChange={(e) => setJenis(e.target.value)}>
             <option value="">Semua Jenis</option>
-            <option>Magang</option>
-            <option>Penelitian</option>
-            <option>Praktik Kerja Lapangan (PKL)</option>
-            <option>Lainnya</option>
+            {JENIS.map((j) => <option key={j}>{j}</option>)}
           </Select>
           <Select value={bagian} onChange={(e) => setBagian(e.target.value)}>
             <option value="">Semua Bagian</option>
-            <option>Keuangan dan Umum</option>
-            <option>Quality Assurance</option>
-            <option>Tanaman TR</option>
-            <option>Teknik</option>
-            <option>Pengolahan</option>
+            {BAGIAN.map((b) => <option key={b}>{b}</option>)}
           </Select>
           <Select value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="">Semua Status</option>
@@ -155,20 +206,41 @@ export default function SubmissionsTable() {
             <option>Proses</option>
             <option>Terbit</option>
           </Select>
-          <div className="grid grid-cols-2 items-center gap-1.5 sm:flex sm:items-center">
-            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label="Dari tanggal" className="min-w-0" />
-            <span className="text-center text-muted-foreground">–</span>
-            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label="Sampai tanggal" className="min-w-0" />
-          </div>
+          <Select value={rating} onChange={(e) => setRating(e.target.value)}>
+            <option value="">Semua Rating</option>
+            {RATINGS.map((r) => <option key={r}>{r}</option>)}
+          </Select>
+          <MonthPicker value={bulan} onChange={setBulan} />
+          <DatePicker
+            value={from}
+            onChange={(v) => { setFrom(v); if (to && v > to) setTo(""); }}
+            placeholder="Dari tanggal"
+            max={to || undefined}
+          />
+          <DatePicker
+            value={to}
+            onChange={(v) => { setTo(v); if (from && v && v < from) setFrom(""); }}
+            placeholder="Sampai tanggal"
+            min={from || undefined}
+          />
         </CardContent>
       </Card>
 
       {/* Table */}
       <Card>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left text-sm">
+          <table className="w-full min-w-[920px] text-left text-sm">
             <thead>
               <tr className="border-b border-border text-xs text-muted-foreground">
+                <th className="w-10 px-3 py-3">
+                  <input
+                    type="checkbox"
+                    checked={pageRows.length > 0 && selected.size === pageRows.length && pageRows.every((r) => selected.has(r.id))}
+                    onChange={toggleSelectAll}
+                    aria-label="Pilih semua di halaman ini"
+                    className="h-4 w-4 accent-primary"
+                  />
+                </th>
                 {[
                   { key: "ref", label: "No. Ref" },
                   { key: "createdAt", label: "Tanggal" },
@@ -196,7 +268,16 @@ export default function SubmissionsTable() {
             </thead>
             <tbody>
               {pageRows.map((s) => (
-                <tr key={s.id} className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/50">
+                <tr key={s.id} className={cn("border-b border-border/60 transition-colors last:border-0 hover:bg-muted/50", selected.has(s.id) && "bg-primary/5")}>
+                  <td className="px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(s.id)}
+                      onChange={() => toggleSelect(s.id)}
+                      aria-label={`Pilih ${s.ref}`}
+                      className="h-4 w-4 accent-primary"
+                    />
+                  </td>
                   <td className="px-4 py-3">
                     <Link href={`/admin/submissions/${s.id}`} className="font-mono text-xs font-medium text-primary hover:underline">
                       {s.ref}
@@ -235,6 +316,27 @@ export default function SubmissionsTable() {
           </div>
         )}
       </Card>
+
+      {/* Konfirmasi hapus */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setConfirmDelete(false)} aria-hidden />
+          <div className="relative w-full max-w-sm rounded-lg border border-border bg-card p-5 shadow-lg">
+            <h2 className="text-base font-semibold text-foreground">Hapus {selected.size} data?</h2>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              Data yang dihapus tidak bisa dikembalikan. Pastikan sudah mengekspor CSV jika perlu arsip.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setConfirmDelete(false)} disabled={deleting}>
+                Batal
+              </Button>
+              <Button variant="destructive" onClick={handleDelete} loading={deleting}>
+                {deleting ? "Menghapus…" : "Hapus"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { Button, FormField, Input, Progress, Select, Textarea } from "@/components/ui";
+import { DatePicker } from "@/components/date-picker";
 import { StepTransition } from "@/components/motion";
 import { createSubmission } from "@/lib/store";
 import type { FeedbackFormData } from "@/lib/types";
@@ -242,10 +243,20 @@ export default function FeedbackForm() {
             )}
             <div className="grid gap-5 sm:grid-cols-2">
               <FormField label="Periode Mulai" required error={form.formState.errors.periodeMulai?.message}>
-                <Input type="date" {...form.register("periodeMulai")} />
+                <DatePicker
+                  value={getValues("periodeMulai")}
+                  onChange={(v) => setValue("periodeMulai", v, { shouldValidate: true })}
+                  max={getValues("periodeAkhir") || undefined}
+                  aria-label="Periode mulai program"
+                />
               </FormField>
               <FormField label="Periode Akhir" required error={form.formState.errors.periodeAkhir?.message}>
-                <Input type="date" {...form.register("periodeAkhir")} />
+                <DatePicker
+                  value={getValues("periodeAkhir")}
+                  onChange={(v) => setValue("periodeAkhir", v, { shouldValidate: true })}
+                  min={getValues("periodeMulai") || undefined}
+                  aria-label="Periode akhir program"
+                />
               </FormField>
             </div>
             <FormField label="Penempatan Bagian/Divisi" required error={form.formState.errors.bagian?.message}>

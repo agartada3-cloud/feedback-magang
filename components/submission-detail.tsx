@@ -2,9 +2,10 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowLeft, MessageCircle, Star } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, MessageCircle, Star, Trash2 } from "lucide-react";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, EmptyState, Select } from "@/components/ui";
-import { getSubmission, updateStatus } from "@/lib/store";
+import { getSubmission, updateStatus, deleteSubmissions } from "@/lib/store";
 import type { StatusSertifikat, Submission } from "@/lib/types";
 import { formatDateFull } from "@/lib/utils";
 
@@ -27,6 +28,9 @@ function DetailRow({ label, value }: { label: string; value?: string }) {
 export default function SubmissionDetail({ id }: { id: string }) {
   const [sub, setSub] = React.useState<Submission | null | undefined>(undefined);
   const [saving, setSaving] = React.useState(false);
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
+  const router = useRouter();
 
   React.useEffect(() => {
     getSubmission(id).then(setSub);
@@ -52,6 +56,13 @@ export default function SubmissionDetail({ id }: { id: string }) {
     setSaving(false);
   }
 
+  async function handleDelete() {
+    setDeleting(true);
+    await deleteSubmissions([sub!.id]);
+    setDeleting(false);
+    router.replace("/admin/submissions");
+  }
+
   const waLink = `https://wa.me/${sub.noWa.replace(/^0/, "62")}`;
 
   return (
@@ -67,6 +78,13 @@ export default function SubmissionDetail({ id }: { id: string }) {
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <h1 className="font-mono text-xl font-semibold tracking-tight text-foreground">{sub.ref}</h1>
           <Badge tone={STATUS_TONE[sub.statusSertifikat]}>{sub.statusSertifikat}</Badge>
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="ml-auto inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-error/10 hover:text-error"
+          >
+            <Trash2 className="h-3.5 w-3.5" aria-hidden />
+            Hapus
+          </button>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">Dikirim {formatDateFull(sub.createdAt)}</p>
       </div>
@@ -144,6 +162,27 @@ export default function SubmissionDetail({ id }: { id: string }) {
           <Button variant="outline">Kembali</Button>
         </Link>
       </div>
+
+      {/* Konfirmasi hapus */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setConfirmDelete(false)} aria-hidden />
+          <div className="relative w-full max-w-sm rounded-lg border border-border bg-card p-5 shadow-lg">
+            <h2 className="text-base font-semibold text-foreground">Hapus {sub.ref}?</h2>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              Data ini tidak bisa dikembalikan. Pastikan sudah mengekspor CSV jika perlu arsip.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setConfirmDelete(false)} disabled={deleting}>
+                Batal
+              </Button>
+              <Button variant="destructive" onClick={handleDelete} loading={deleting}>
+                {deleting ? "Menghapus…" : "Hapus"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
