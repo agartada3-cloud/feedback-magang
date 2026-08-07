@@ -4,7 +4,7 @@ import { Resvg } from "@resvg/resvg-js";
 
 export interface RasterizeOptions {
   /** fitTo width target = canvasWidth * scale */
-  scale: 1 | 2 | 3;
+  scale: 1 | 2 | 3 | 4;
   canvasWidth: number;
   background?: string;
 }

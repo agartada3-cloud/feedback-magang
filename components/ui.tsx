@@ -36,9 +36,11 @@ export function Button({ className, variant = "primary", size = "md", loading, d
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors",
-        "disabled:pointer-events-none disabled:opacity-50",
-        "min-h-[44px] md:min-h-0",
+        "inline-flex items-center justify-center gap-2 rounded-lg font-medium",
+        "transition-all duration-150 cubic-bezier(0.23,1,0.32,1)",
+        "active:scale-[0.97] active:opacity-90",
+        "disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100",
+        "min-h-[44px] md:min-h-0 select-none",
         btnVariants[variant],
         btnSizes[size],
         className
@@ -57,7 +59,7 @@ export function Button({ className, variant = "primary", size = "md", loading, d
 /* ---------- Input / Textarea / Select ---------- */
 
 const fieldBase =
-  "w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors disabled:opacity-50";
+  "w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/80 transition-all duration-150 ease-out disabled:opacity-50";
 
 export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn(fieldBase, "h-10", className)} {...props} />;
@@ -117,7 +119,7 @@ export function FormField({
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("rounded-lg border border-border bg-card shadow-sm", className)}
+      className={cn("rounded-lg border border-border bg-card shadow-sm transition-all duration-200 ease-out hover:border-border/80", className)}
       {...props}
     />
   );
@@ -155,7 +157,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium",
+        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors duration-150",
         badgeTones[tone],
         className
       )}
@@ -170,7 +172,7 @@ export function Progress({ value, className }: { value: number; className?: stri
   return (
     <div className={cn("h-2 w-full overflow-hidden rounded-full bg-muted", className)}>
       <div
-        className="h-full rounded-full bg-primary transition-all duration-300"
+        className="h-full rounded-full bg-primary transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]"
         style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
       />
     </div>

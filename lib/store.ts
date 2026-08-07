@@ -217,9 +217,16 @@ export async function updateStatus(id: string, status: StatusSertifikat): Promis
 
 export async function deleteSubmissions(ids: string[]): Promise<void> {
   if (!ids.length) return;
-  if (supabase) {
-    const { error } = await supabase.from("submissions").delete().in("id", ids);
-    if (error) throw error;
+  if (isSupabaseMode) {
+    const res = await fetch("/api/submissions/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids }),
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      throw new Error(d.error || "Gagal menghapus data submissions");
+    }
     return;
   }
   const items = lsReadAll();

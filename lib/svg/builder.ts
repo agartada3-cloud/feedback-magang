@@ -4,7 +4,7 @@
 // Vercel serverless tidak me-render data-URI @font-face dengan konsisten.
 // Fallback ke <text> kalau font tidak tersedia.
 
-import type { ElementSetting, Segment } from "@/lib/cert-types";
+import type { ElementSetting, ImageElementSetting, Segment } from "@/lib/cert-types";
 import { CANVAS_H, CANVAS_W, MAX_LINE_WIDTH } from "../constants";
 import { autoShrink, segmentsOverflow } from "./measure";
 import { textToPath } from "./paths";
@@ -16,6 +16,7 @@ export interface BuildSvgInput {
   templateWidth: number;
   templateHeight: number;
   elements: Record<string, ElementSetting>;
+  imageElements?: Record<string, ImageElementSetting>;
   /** resolver VAR_* → teks final per elemen */
   resolveSegments: (elementKey: string) => Segment[];
 }
@@ -26,7 +27,7 @@ export interface BuildSvgInput {
  * (default 2000x1414), text-anchor=middle (via path offset).
  */
 export function buildSvg(input: BuildSvgInput): { svg: string; width: number; height: number; overflows: string[] } {
-  const { templateUrl, templateWidth, templateHeight, elements, resolveSegments } = input;
+  const { templateUrl, templateWidth, templateHeight, elements, imageElements = {}, resolveSegments } = input;
   const W = templateWidth || CANVAS_W;
   const H = templateHeight || CANVAS_H;
   const overflows: string[] = [];
@@ -40,6 +41,17 @@ export function buildSvg(input: BuildSvgInput): { svg: string; width: number; he
 
   if (templateUrl) {
     parts.push(`<image href="${templateUrl}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice"/>`);
+  }
+
+  // Render Image Elements (TTD, Stempel, Logo, QR)
+  for (const [key, img] of Object.entries(imageElements)) {
+    if (!img.url) continue;
+    const imgX = img.x - img.width / 2;
+    const imgY = img.y - img.height / 2;
+    const op = (img.opacity ?? 100) / 100;
+    parts.push(
+      `<image href="${escapeXml(img.url)}" x="${imgX}" y="${imgY}" width="${img.width}" height="${img.height}" opacity="${op}" preserveAspectRatio="xMidYMid meet"/>`
+    );
   }
 
   for (const [key, el] of Object.entries(elements)) {
@@ -70,7 +82,7 @@ export function buildSvg(input: BuildSvgInput): { svg: string; width: number; he
         }
       }
       // fallback: <text> biasa
-      const frag = `<text x="${cursorX + s.text.length * size * 0.55 / 2}" y="${el.y}" text-anchor="middle" font-size="${size}" fill="${el.color}" font-family="sans-serif">${escapeXml(s.text)}</text>`;
+      const frag = `<text x="${cursorX + (s.text.length * size * 0.55) / 2}" y="${el.y}" text-anchor="middle" font-size="${size}" fill="${el.color}" font-family="sans-serif">${escapeXml(s.text)}</text>`;
       cursorX += s.text.length * size * 0.55;
       return frag;
     });

@@ -20,7 +20,20 @@ export interface GenerateResult {
  * 4. Rasterize @scale
  * 5. Simpan ke Storage + log cert_generated
  */
-export async function generateCertificate(feedbackId: string, scale: 1 | 2 | 3 = 3): Promise<GenerateResult> {
+function resolveSubmissionTokens(templateStr: string, cert: CertInputRow, tglTaken: string): string {
+  const perusahaan = "PT Sinergi Gula Nusantara - Pabrik Gula Djatiroto";
+  return templateStr
+    .replaceAll("<nama>", cert.nama.toUpperCase())
+    .replaceAll("<program>", cert.program || "Program Magang")
+    .replaceAll("<bagian>", cert.bagian || "-")
+    .replaceAll("<sub_bagian>", cert.sub_bagian || "")
+    .replaceAll("<tgl_awal>", formatTanggalId(cert.tgl_awal))
+    .replaceAll("<tgl_akhir>", formatTanggalId(cert.tgl_akhir))
+    .replaceAll("<tgl_taken>", formatTanggalId(tglTaken))
+    .replaceAll("<perusahaan>", perusahaan);
+}
+
+export async function generateCertificate(feedbackId: string, scale: 1 | 2 | 3 | 4 = 2): Promise<GenerateResult> {
   try {
     // 1. data
     const { data: row, error: e1 } = await supabaseAdmin
@@ -44,7 +57,6 @@ export async function generateCertificate(feedbackId: string, scale: 1 | 2 | 3 =
     const settings = settingsRows[0] as unknown as Settings & { elements: Record<string, any> };
 
     // 3. template — download dari storage → base64 data URI
-    //    (resvg TIDAK me-render <image href> remote URL; butuh data URI)
     let templateUrl: string | null = null;
     let templateW = 2000;
     let templateH = 1414;
@@ -73,29 +85,39 @@ export async function generateCertificate(feedbackId: string, scale: 1 | 2 | 3 =
       }
     }
 
-    // 4. resolve segmen per elemen — HANYA yang kosong di template.
-    //    Template SUDAH punya: judul "SERTIFIKAT" (biru), "Diberikan kepada",
-    //    "Telah Melaksanakan", baris "PT Sinergi Gula Nusantara - Pabrik
-    //    Gula Djatiroto" (bawah), header & footer — JANGAN di-render ulang.
+    // 4. resolve segmen per elemen
     const tglTaken = hitungTanggalTaken(cert.tgl_akhir);
     const perusahaan = "PT Sinergi Gula Nusantara - Pabrik Gula Djatiroto";
-    const segs: Record<string, Segment[]> = {
-      // nama — MERAH (PRD: RGB 207,52,36 = #CF3424), bold glacial
-      nama: [{ text: cert.nama.toUpperCase(), font: "glacial-bold" }],
-      // program dipecah 2 baris biar bisa full 3x: nama program + perusahaan
-      program: [{ text: cert.program || "Program Magang", font: "opensauce-bold" }],
-      perusahaan: [{ text: `di ${perusahaan}`, font: "opensauce-bold" }],
-      bagian: [{ text: `pada bagian ${cert.bagian || "-"}${cert.sub_bagian ? ` - ${cert.sub_bagian}` : ""}`, font: "opensauce-bold" }],
-      periode: [{ text: `Periode magang dimulai dari ${formatTanggalId(cert.tgl_awal)} sampai ${formatTanggalId(cert.tgl_akhir)}.`, font: "opensauce-bold" }],
-      taken: [{ text: `Lumajang, ${formatTanggalId(tglTaken)}`, font: "opensauce-bold" }],
-    };
+    const elSettings = settings.elements ?? {};
+    const imgSettings = settings.image_elements ?? {};
+
+    const segs: Record<string, Segment[]> = {};
+
+    // Standard & Custom Text Elements
+    Object.entries(elSettings).forEach(([key, el]) => {
+      let defaultText = "";
+      if (key === "nama") defaultText = cert.nama.toUpperCase();
+      else if (key === "program") defaultText = cert.program || "Program Magang";
+      else if (key === "perusahaan") defaultText = `di ${perusahaan}`;
+      else if (key === "bagian") defaultText = `pada bagian ${cert.bagian || "-"}${cert.sub_bagian ? ` - ${cert.sub_bagian}` : ""}`;
+      else if (key === "periode") defaultText = `Periode magang dimulai dari ${formatTanggalId(cert.tgl_awal)} sampai ${formatTanggalId(cert.tgl_akhir)}.`;
+      else if (key === "taken") defaultText = `Lumajang, ${formatTanggalId(tglTaken)}`;
+      else defaultText = el.sample_text || key;
+
+      const finalText = el.sample_text
+        ? resolveSubmissionTokens(el.sample_text, cert, tglTaken)
+        : defaultText;
+
+      segs[key] = [{ text: finalText, font: el.font || "opensauce-bold" }];
+    });
 
     const { svg, width, overflows } = buildSvg({
       templateUrl,
       templateWidth: templateW,
       templateHeight: templateH,
-      elements: settings.elements,
-      resolveSegments: (key) => segs[key] ?? [],
+      elements: elSettings,
+      imageElements: imgSettings,
+      resolveSegments: (k) => segs[k] ?? [],
     });
 
     // 5. rasterize

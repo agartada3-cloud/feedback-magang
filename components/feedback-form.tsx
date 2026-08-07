@@ -11,13 +11,13 @@ import { StepTransition } from "@/components/motion";
 import { createSubmission } from "@/lib/store";
 import type { FeedbackFormData } from "@/lib/types";
 
-const WA_REGEX = /^(08|62|628)\d{8,13}$/;
+const WA_REGEX = /^(\+?62|0)[0-9]{9,13}$/;
 const DRAFT_KEY = "feedback_magang_draft";
 const HONEYPOT_KEY = "website"; // field umpan anti-bot, hidden
 
 const schema = z.object({
   namaLengkap: z.string().min(3, "Minimal 3 karakter"),
-  noWa: z.string().regex(WA_REGEX, "Format WA tidak valid (08xx / 62xx / 628xx, 9-15 digit)"),
+  noWa: z.string().regex(WA_REGEX, "Format WA tidak valid (10-14 digit, contoh: 081234567890)"),
   email: z.string().email("Format email tidak valid"),
   universitas: z.string().min(3, "Minimal 3 karakter"),
   jurusan: z.string().min(3, "Minimal 3 karakter"),
@@ -159,6 +159,18 @@ export default function FeedbackForm() {
       };
       const sub = await createSubmission(data);
       localStorage.removeItem(DRAFT_KEY);
+
+      // Auto-generate sertifikat otomatis setelah submit feedback
+      try {
+        await fetch("/api/sertifikat/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ feedback_id: sub.id, scale: 3 }),
+        });
+      } catch (err) {
+        console.warn("Auto-generate certificate fallback:", err);
+      }
+
       router.push(`/feedback/success?ref=${sub.ref}`);
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : "Gagal mengirim. Coba lagi.");

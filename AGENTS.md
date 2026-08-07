@@ -7,3 +7,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+# Always Active Project Skills
+The following skills are permanently active for all requests in this workspace:
+- `/caveman` (caveman compressed communication style)
+- `/ponytail` (lazy senior dev, YAGNI, standard library first)
+- `/concise-planning` (clear actionable checklist & implementation plan)
+- `/systematic-debugging` (empirical diagnosis before modifying code)
+- `/kaizen` (continuous quality improvement)
+- `/lint-and-validate` (mandatory verification via npm run build)

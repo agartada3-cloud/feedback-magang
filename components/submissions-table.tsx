@@ -109,6 +109,33 @@ export default function SubmissionsTable() {
     });
   }
 
+  const [downloadingZip, setDownloadingZip] = React.useState(false);
+
+  async function handleBatchZipDownload() {
+    const ids = [...selected];
+    if (!ids.length) return;
+    setDownloadingZip(true);
+    try {
+      const res = await fetch("/api/sertifikat/generate-zip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      if (!res.ok) throw new Error("Gagal generate ZIP");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `sertifikat-batch-${new Date().toISOString().slice(0, 10)}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Gagal mengunduh berkas batch ZIP.");
+    } finally {
+      setDownloadingZip(false);
+    }
+  }
+
   async function handleDelete() {
     const ids = [...selected];
     if (!ids.length) return;
@@ -163,15 +190,28 @@ export default function SubmissionsTable() {
         </div>
         <div className="flex items-center gap-2">
           {selected.size > 0 && (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setConfirmDelete(true)}
-              className="min-h-[40px]"
-            >
-              <Trash2 className="h-4 w-4" aria-hidden />
-              Hapus ({selected.size})
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBatchZipDownload}
+                loading={downloadingZip}
+                className="min-h-[40px] border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+              >
+                <Download className="h-4 w-4" aria-hidden />
+                {downloadingZip ? "Memproses ZIP..." : `Download Batch ZIP (${selected.size})`}
+              </Button>
+
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setConfirmDelete(true)}
+                className="min-h-[40px]"
+              >
+                <Trash2 className="h-4 w-4" aria-hidden />
+                Hapus ({selected.size})
+              </Button>
+            </>
           )}
           <Button variant="outline" onClick={exportCsv} disabled={!filtered.length}>
             <Download className="h-4 w-4" aria-hidden />
@@ -199,12 +239,6 @@ export default function SubmissionsTable() {
           <Select value={bagian} onChange={(e) => setBagian(e.target.value)}>
             <option value="">Semua Bagian</option>
             {BAGIAN.map((b) => <option key={b}>{b}</option>)}
-          </Select>
-          <Select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="">Semua Status</option>
-            <option>Belum</option>
-            <option>Proses</option>
-            <option>Terbit</option>
           </Select>
           <Select value={rating} onChange={(e) => setRating(e.target.value)}>
             <option value="">Semua Rating</option>
@@ -249,7 +283,6 @@ export default function SubmissionsTable() {
                   { key: "jenisProgram", label: "Jenis" },
                   { key: "bagian", label: "Bagian" },
                   { key: "rating", label: "Rating" },
-                  { key: "statusSertifikat", label: "Status" },
                 ].map((col) => (
                   <th key={col.key} className="px-4 py-3 font-medium">
                     <button
@@ -289,9 +322,6 @@ export default function SubmissionsTable() {
                   <td className="px-4 py-3 text-muted-foreground">{s.jenisProgram}</td>
                   <td className="px-4 py-3 text-muted-foreground">{s.bagian}</td>
                   <td className="px-4 py-3 text-muted-foreground">{s.rating}</td>
-                  <td className="px-4 py-3">
-                    <Badge tone={STATUS_TONE[s.statusSertifikat]}>{s.statusSertifikat}</Badge>
-                  </td>
                 </tr>
               ))}
             </tbody>

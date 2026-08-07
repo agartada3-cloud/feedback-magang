@@ -1,6 +1,8 @@
 // types/index.ts — Certificate Generator
 
 export interface ElementSetting {
+  /** custom label / judul elemen */
+  label?: string;
   /** center-x di kanvas base (default 2000x1414) */
   x: number;
   /** center-y */
@@ -11,10 +13,24 @@ export interface ElementSetting {
   color: string;
   /** font key: "glacial-bold" | "opensauce-bold" | "opensauce-regular" | custom id */
   font: string;
+  /** redaksi teks / teks sampel kustom */
+  sample_text?: string;
   /** auto-shrink khusus nama */
   auto_shrink?: boolean;
   /** min size saat shrink, default 8 */
   min_size?: number;
+}
+
+export interface ImageElementSetting {
+  id: string;
+  label: string;
+  url: string;
+  storage_path: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  opacity?: number;
 }
 
 export interface Segment {
@@ -30,9 +46,11 @@ export interface ElementDef {
 export interface Settings {
   id: string;
   template_id: string;
-  /** Record<elementKey, ElementSetting> — keys: nama, program, bagian, periode, taken */
+  /** Record<elementKey, ElementSetting> — keys: nama, program, bagian, periode, taken, dll */
   elements: Record<string, ElementSetting>;
-  upscale_default: number; // 1|2|3
+  /** Record<imageKey, ImageElementSetting> — TTD, Stempel, Logo, QR */
+  image_elements?: Record<string, ImageElementSetting>;
+  upscale_default: number; // 1|2|4
   zoom_default: number; // persen
   updated_at: string;
 }

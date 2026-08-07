@@ -3,3 +3,7 @@ node_modules/
 .env*
 !.env.example
 .vercel
+.agents/
+graphify-out/
+skills-lock.json
+
