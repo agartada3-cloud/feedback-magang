@@ -16,9 +16,10 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { template_id, elements, upscale_default, zoom_default } = body as {
+    const { template_id, elements, image_elements, upscale_default, zoom_default } = body as {
       template_id?: string;
       elements?: Record<string, unknown>;
+      image_elements?: Record<string, unknown>;
       upscale_default?: number;
       zoom_default?: number;
     };
@@ -32,6 +33,7 @@ export async function POST(req: Request) {
         .update({
           template_id: template_id ?? existing[0].template_id,
           elements: elements ?? existing[0].elements,
+          image_elements: image_elements ?? existing[0].image_elements,
           upscale_default: upscale_default ?? existing[0].upscale_default,
           zoom_default: zoom_default ?? existing[0].zoom_default,
           updated_at: new Date().toISOString(),
@@ -42,6 +44,7 @@ export async function POST(req: Request) {
       const { error } = await supabaseAdmin.from("cert_settings").insert({
         template_id: template_id ?? null,
         elements: elements ?? {},
+        image_elements: image_elements ?? {},
         upscale_default: upscale_default ?? 3,
         zoom_default: zoom_default ?? 100,
       });

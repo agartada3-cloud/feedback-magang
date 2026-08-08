@@ -263,13 +263,13 @@ export default function SubmissionsTable() {
       {/* Table */}
       <Card>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[920px] text-left text-sm">
+          <table className="w-full min-w-[860px] text-left text-sm">
             <thead>
               <tr className="border-b border-border text-xs text-muted-foreground">
                 <th className="w-10 px-3 py-3">
                   <input
                     type="checkbox"
-                    checked={pageRows.length > 0 && selected.size === pageRows.length && pageRows.every((r) => selected.has(r.id))}
+                    checked={pageRows.length > 0 && selected.size === pageRows.length}
                     onChange={toggleSelectAll}
                     aria-label="Pilih semua di halaman ini"
                     className="h-4 w-4 accent-primary"
@@ -303,6 +303,14 @@ export default function SubmissionsTable() {
             <tbody>
               {pageRows.map((s) => (
                 <tr key={s.id} className={cn("group border-b border-border/60 transition-colors last:border-0 hover:bg-muted/50 cursor-pointer", selected.has(s.id) && "bg-primary/5")} onClick={() => toggleSelect(s.id)}>
+                  <td className="px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(s.id)}
+                      readOnly
+                      className="h-4 w-4 accent-primary pointer-events-none"
+                    />
+                  </td>
                   <td className="px-4 py-3">
                     <Link href={`/admin/submissions/${s.id}`} className="font-mono text-xs font-medium text-primary hover:underline">
                       {s.ref}
