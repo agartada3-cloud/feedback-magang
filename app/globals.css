@@ -3,6 +3,18 @@
 /* Dark mode class-based (Tailwind v4) */
 @custom-variant dark (&:is(.dark *));
 
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* font bundle sertifikat — preview browser (CSS @font-face dari public/fonts) */
 @font-face {
   font-family: "GlacialIndifference-Bold";

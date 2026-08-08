@@ -18,7 +18,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="id" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="id" className={`${inter.variable} h-full antialiased overflow-x-clip`} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

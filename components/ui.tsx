@@ -39,6 +39,7 @@ export function Button({ className, variant = "primary", size = "md", loading, d
         "inline-flex items-center justify-center gap-2 rounded-lg font-medium",
         "transition-all duration-150 cubic-bezier(0.23,1,0.32,1)",
         "active:scale-[0.97] active:opacity-90",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2",
         "disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100",
         "min-h-[44px] md:min-h-0 select-none",
         btnVariants[variant],
@@ -59,7 +60,7 @@ export function Button({ className, variant = "primary", size = "md", loading, d
 /* ---------- Input / Textarea / Select ---------- */
 
 const fieldBase =
-  "w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/80 transition-all duration-150 ease-out disabled:opacity-50";
+  "w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary/80 transition-all duration-150 ease-out disabled:opacity-50";
 
 export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn(fieldBase, "h-10", className)} {...props} />;
