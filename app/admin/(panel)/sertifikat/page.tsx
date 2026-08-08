@@ -36,6 +36,45 @@ export default function AdminPage() {
   const [search, setSearch] = React.useState("");
 
   const [previewRow, setPreviewRow] = React.useState<CertRow | null>(null);
+  const [csvUploading, setCsvUploading] = React.useState(false);
+  const [csvResult, setCsvResult] = React.useState<string | null>(null);
+
+  async function handleCsvUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCsvUploading(true);
+    setCsvResult(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("scale", "2");
+      const res = await fetch("/api/sertifikat/generate-csv", { method: "POST", body: form });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || `HTTP ${res.status}`);
+      }
+      const resultsHeader = res.headers.get("X-Results");
+      const results = resultsHeader ? JSON.parse(decodeURIComponent(resultsHeader)) : [];
+      const ok = results.filter((r: any) => r.ok).length;
+      const fail = results.filter((r: any) => !r.ok).length;
+      setCsvResult(`Sukses: ${ok} sertifikat${fail ? `, Gagal: ${fail}` : ""}`);
+
+      // Download ZIP
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `sertifikat_bulk_${Date.now()}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      load();
+    } catch (err) {
+      setCsvResult(`Error: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setCsvUploading(false);
+      e.target.value = "";
+    }
+  }
 
   async function load() {
     setLoading(true);
@@ -148,6 +187,17 @@ export default function AdminPage() {
             <p className="text-xs text-zinc-500 dark:text-zinc-400">PG Djatiroto — generator sertifikat otomatis</p>
           </div>
           <div className="flex items-center gap-2">
+            <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">
+              <FileText className="h-3.5 w-3.5" />
+              {csvUploading ? "Uploading..." : "Upload CSV"}
+              <input
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={handleCsvUpload}
+                disabled={csvUploading}
+              />
+            </label>
             <button
               onClick={() => router.push("/admin/sertifikat/settings")}
               className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
@@ -165,6 +215,12 @@ export default function AdminPage() {
       </header>
 
       <div className="mx-auto max-w-6xl px-4 py-6">
+        {csvResult && (
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+            {csvResult}
+          </div>
+        )}
+
         {error && (
           <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
