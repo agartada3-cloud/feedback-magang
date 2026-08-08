@@ -335,15 +335,6 @@ export default function SettingsPage() {
                             onDelete={() => {
                               setImageElements((prev) => {
                                 const next = { ...prev };
-                                next[newKey] = next[oldKey];
-                                delete next[oldKey];
-                                return next;
-                              });
-                              if (selectedKey === oldKey) setSelectedKey(newKey);
-                            }}
-                            onDelete={() => {
-                              setImageElements((prev) => {
-                                const next = { ...prev };
                                 delete next[key];
                                 return next;
                               });
