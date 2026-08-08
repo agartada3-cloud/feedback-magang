@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Download, Search, Trash2 } from "lucide-react";
+import { Download, Pencil, Search, Settings, Trash2 } from "lucide-react";
 import { Badge, Button, Card, CardContent, EmptyState, Input, Select } from "@/components/ui";
 import { DatePicker, MonthPicker } from "@/components/date-picker";
 import { deleteSubmissions, listSubmissions } from "@/lib/store";
@@ -297,20 +297,12 @@ export default function SubmissionsTable() {
                     </button>
                   </th>
                 ))}
+                <th className="w-20 px-4 py-3 text-right font-medium">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {pageRows.map((s) => (
-                <tr key={s.id} className={cn("border-b border-border/60 transition-colors last:border-0 hover:bg-muted/50", selected.has(s.id) && "bg-primary/5")}>
-                  <td className="px-3 py-3">
-                    <input
-                      type="checkbox"
-                      checked={selected.has(s.id)}
-                      onChange={() => toggleSelect(s.id)}
-                      aria-label={`Pilih ${s.ref}`}
-                      className="h-4 w-4 accent-primary"
-                    />
-                  </td>
+                <tr key={s.id} className={cn("group border-b border-border/60 transition-colors last:border-0 hover:bg-muted/50 cursor-pointer", selected.has(s.id) && "bg-primary/5")} onClick={() => toggleSelect(s.id)}>
                   <td className="px-4 py-3">
                     <Link href={`/admin/submissions/${s.id}`} className="font-mono text-xs font-medium text-primary hover:underline">
                       {s.ref}
@@ -322,6 +314,27 @@ export default function SubmissionsTable() {
                   <td className="px-4 py-3 text-muted-foreground">{s.jenisProgram}</td>
                   <td className="px-4 py-3 text-muted-foreground">{s.bagian}</td>
                   <td className="px-4 py-3 text-muted-foreground">{s.rating}</td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                      <Link
+                        href={`/admin/submissions/${s.id}`}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        aria-label={`Edit ${s.ref}`}
+                      >
+                        <Settings className="h-3.5 w-3.5" aria-hidden />
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setSelected(new Set([s.id]));
+                          setConfirmDelete(true);
+                        }}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-error/10 hover:text-error"
+                        aria-label={`Hapus ${s.ref}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

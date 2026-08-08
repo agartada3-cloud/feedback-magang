@@ -4,7 +4,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Download, FileText, Loader2, RefreshCw, Settings2, Sparkles, Zap } from "lucide-react";
+import { ChevronDown, Download, FileText, Loader2, RefreshCw, Settings2, Sparkles, Zap } from "lucide-react";
 import { supabaseClient } from "@/lib/supabase";
 import { AnimatedNumber, Reveal, Stagger, StaggerItem } from "@/components/motion";
 
@@ -38,6 +38,9 @@ export default function AdminPage() {
   const [previewRow, setPreviewRow] = React.useState<CertRow | null>(null);
   const [csvUploading, setCsvUploading] = React.useState(false);
   const [csvResult, setCsvResult] = React.useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = React.useState<string | null>(null);
+  const [previewDownloading, setPreviewDownloading] = React.useState(false);
+  const [openScaleDropdown, setOpenScaleDropdown] = React.useState<string | null>(null);
 
   async function handleCsvUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -92,6 +95,15 @@ export default function AdminPage() {
     }
   }
 
+  // close scale dropdown on outside click
+  React.useEffect(() => {
+    function handleClick() { setOpenScaleDropdown(null); }
+    if (openScaleDropdown) {
+      document.addEventListener("click", handleClick);
+      return () => document.removeEventListener("click", handleClick);
+    }
+  }, [openScaleDropdown]);
+
   React.useEffect(() => {
     // AuthGuard (layout) udah handle login — langsung load
     load();
@@ -119,14 +131,16 @@ export default function AdminPage() {
     }
   }
 
-  function download(id: string, name?: string) {
-    const url = `/api/sertifikat/download?id=${id}&download=1`;
+  function download(id: string, name?: string, scale: number = 2) {
+    setDownloadingId(id);
+    const url = `/api/sertifikat/download?id=${id}&download=1&scale=${scale}`;
     const a = document.createElement("a");
     a.href = url;
-    a.download = `Sertifikat_${(name || id).replace(/\s+/g, "_")}.png`;
+    a.download = `Sertifikat_${(name || id).replace(/\s+/g, "_")}_${scale}x.png`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+    setTimeout(() => setDownloadingId(null), 1500);
   }
 
   function downloadPdf(id: string, name?: string) {
@@ -215,6 +229,25 @@ export default function AdminPage() {
       </header>
 
       <div className="mx-auto max-w-6xl px-4 py-6">
+        {csvUploading && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
+              <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-indigo-600" />
+              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Uploading CSV…</p>
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Generating sertifikat, mohon tunggu</p>
+            </div>
+          </div>
+        )}
+        {batchLoading && !csvUploading && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
+              <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-emerald-600" />
+              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Generate Semua…</p>
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Sedang memproses seluruh sertifikat</p>
+            </div>
+          </div>
+        )}
+
         {csvResult && (
           <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
             {csvResult}
@@ -347,13 +380,34 @@ export default function AdminPage() {
                             >
                               <FileText className="h-3.5 w-3.5 text-indigo-500" /> Preview
                             </button>
-                            <button
-                              onClick={() => download(r.feedback_id, r.nama)}
-                              className="flex items-center gap-1 rounded-lg bg-zinc-100 px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-                              title="Download PNG"
-                            >
-                              <Download className="h-3.5 w-3.5" /> PNG
-                            </button>
+                            <div className="relative">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setOpenScaleDropdown(openScaleDropdown === r.feedback_id ? null : r.feedback_id); }}
+                                disabled={downloadingId === r.feedback_id}
+                                className="flex items-center gap-1 rounded-lg bg-zinc-100 px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-50"
+                                title="Download PNG"
+                              >
+                                {downloadingId === r.feedback_id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                                PNG <ChevronDown className="h-3 w-3" />
+                              </button>
+                              {openScaleDropdown === r.feedback_id && (
+                                <div className="absolute right-0 top-full z-10 mt-1 w-32 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+                                  {[1, 2, 4].map((s) => (
+                                    <button
+                                      key={s}
+                                      onClick={() => {
+                                        setOpenScaleDropdown(null);
+                                        download(r.feedback_id, r.nama, s);
+                                      }}
+                                      className="flex w-full items-center justify-between px-3 py-2 text-xs font-medium text-zinc-700 transition hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-700"
+                                    >
+                                      <span>{s}x</span>
+                                      <span className="text-[10px] text-zinc-400">{s === 1 ? "Small" : s === 2 ? "Standard" : "High-res"}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                             <button
                               onClick={() => downloadPdf(r.feedback_id, r.nama)}
                               className="flex items-center gap-1 rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-900 transition hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
@@ -427,12 +481,34 @@ export default function AdminPage() {
                 >
                   Tutup
                 </button>
-                <button
-                  onClick={() => download(previewRow.feedback_id, previewRow.nama)}
-                  className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-4 py-2 text-xs font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
-                >
-                  <Download className="h-3.5 w-3.5" /> PNG
-                </button>
+                <div className="relative">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setOpenScaleDropdown(openScaleDropdown === "preview" ? null : "preview"); }}
+                    className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-4 py-2 text-xs font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+                  >
+                    {previewDownloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                    PNG <ChevronDown className="h-3 w-3" />
+                  </button>
+                  {openScaleDropdown === "preview" && (
+                    <div className="absolute right-0 top-full z-10 mt-1 w-32 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+                      {[1, 2, 4].map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => {
+                            setOpenScaleDropdown(null);
+                            setPreviewDownloading(true);
+                            download(previewRow.feedback_id, previewRow.nama, s);
+                            setTimeout(() => setPreviewDownloading(false), 1500);
+                          }}
+                          className="flex w-full items-center justify-between px-3 py-2 text-xs font-medium text-zinc-700 transition hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-700"
+                        >
+                          <span>{s}x</span>
+                          <span className="text-[10px] text-zinc-400">{s === 1 ? "Small" : s === 2 ? "Standard" : "High-res"}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <button
                   onClick={() => downloadPdf(previewRow.feedback_id, previewRow.nama)}
                   className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-indigo-700"

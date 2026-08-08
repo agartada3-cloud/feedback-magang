@@ -193,7 +193,18 @@ export default function FeedbackForm() {
   }
 
   return (
-    <div className="w-full">
+    <div className="relative w-full">
+      {/* Full-screen loading overlay */}
+      {submitting && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card px-8 py-10 shadow-lg">
+            <span className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" aria-hidden />
+            <p className="text-sm font-medium text-foreground">Mengirim feedback…</p>
+            <p className="text-xs text-muted-foreground">Mohon tunggu, data sedang diproses.</p>
+          </div>
+        </div>
+      )}
+
       {/* Stepper header */}
       <div className="mb-8">
         <div className="flex items-center justify-between text-xs font-medium">
