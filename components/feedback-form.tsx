@@ -160,6 +160,20 @@ export default function FeedbackForm() {
       const sub = await createSubmission(data);
       localStorage.removeItem(DRAFT_KEY);
 
+      // Fire-and-forget: notif email ke admin (tidak blocking)
+      fetch("/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ref: sub.ref,
+          namaLengkap: sub.namaLengkap,
+          universitas: sub.universitas,
+          jenisProgram: sub.jenisProgram,
+          bagian: sub.bagian,
+          rating: sub.rating,
+        }),
+      }).catch(() => {});
+
       // Auto-generate sertifikat otomatis setelah submit feedback
       try {
         await fetch("/api/sertifikat/generate", {

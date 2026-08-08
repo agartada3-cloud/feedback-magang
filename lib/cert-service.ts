@@ -5,6 +5,7 @@ import { buildSvg } from "./svg/builder";
 import { rasterize, storagePathFor } from "./render/rasterize";
 import { formatPeriode, hitungTanggalTaken, formatTanggalId } from "./dates";
 import type { CertInputRow, Segment, Settings, Template } from "@/lib/cert-types";
+import QRCode from "qrcode";
 
 export interface GenerateResult {
   ok: boolean;
@@ -89,7 +90,34 @@ export async function generateCertificate(feedbackId: string, scale: 1 | 2 | 3 |
     const tglTaken = hitungTanggalTaken(cert.tgl_akhir);
     const perusahaan = "PT Sinergi Gula Nusantara - Pabrik Gula Djatiroto";
     const elSettings = settings.elements ?? {};
-    const imgSettings = settings.image_elements ?? {};
+    const imgSettings = { ...(settings.image_elements ?? {}) };
+
+    // QR verification — kalau settings punya image element id "qrcode", generate QR PNG
+    // yang link ke /verify/<ref> publik. Posisi/ukuran diambil dari settings (admin atur).
+    if (imgSettings.qrcode) {
+      try {
+        const { data: sub } = await supabaseAdmin
+          .from("submissions")
+          .select("ref")
+          .eq("id", feedbackId)
+          .maybeSingle();
+        if (sub?.ref) {
+          const baseUrl =
+            process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+            "https://feedback-magang.vercel.app";
+          const verifyUrl = `${baseUrl}/verify/${encodeURIComponent(sub.ref)}`;
+          const qrDataUri = await QRCode.toDataURL(verifyUrl, {
+            errorCorrectionLevel: "M",
+            margin: 1,
+            width: 512,
+            color: { dark: "#18181b", light: "#ffffff" },
+          });
+          imgSettings.qrcode = { ...imgSettings.qrcode, url: qrDataUri };
+        }
+      } catch (e) {
+        console.error("QR generate failed (skipped):", e);
+      }
+    }
 
     const segs: Record<string, Segment[]> = {};
 
