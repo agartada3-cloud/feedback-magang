@@ -12,14 +12,25 @@ export function ImageElementPanel({
   isSelected,
   onChange,
   onDelete,
+  onRename,
 }: {
   imageKey: string;
   setting: ImageElementSetting;
   isSelected?: boolean;
   onChange: (s: ImageElementSetting) => void;
   onDelete: () => void;
+  onRename?: (oldKey: string, newKey: string) => void;
 }) {
   const [editingTitle, setEditingTitle] = React.useState(false);
+  const [editingId, setEditingId] = React.useState(false);
+  const [newId, setNewId] = React.useState(imageKey);
+
+  function handleRename() {
+    if (newId && newId !== imageKey && onRename) {
+      onRename(imageKey, newId);
+    }
+    setEditingId(false);
+  }
 
   return (
     <div
@@ -29,6 +40,42 @@ export function ImageElementPanel({
           : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700"
       }`}
     >
+      {/* ID (key) — editable */}
+      <div className="mb-2 flex items-center gap-1.5">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">ID:</span>
+        {editingId ? (
+          <div className="flex items-center gap-1 flex-1">
+            <input
+              type="text"
+              value={newId}
+              onChange={(e) => setNewId(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+              className="h-6 w-full rounded border border-amber-400 bg-white px-1.5 font-mono text-[11px] text-zinc-900 outline-none dark:border-amber-500 dark:bg-zinc-800 dark:text-zinc-100"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleRename();
+                if (e.key === "Escape") { setNewId(imageKey); setEditingId(false); }
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleRename}
+              className="rounded bg-amber-600 p-0.5 text-white hover:bg-amber-700"
+            >
+              <Check className="h-3 w-3" />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setEditingId(true)}
+            className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[11px] text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+            title="Klik untuk ubah ID (contoh: qrcode)"
+          >
+            {imageKey}
+          </button>
+        )}
+      </div>
+
       <div className="mb-3 flex items-center justify-between gap-2">
         {editingTitle ? (
           <div className="flex items-center gap-1.5 flex-1">

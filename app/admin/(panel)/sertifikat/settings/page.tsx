@@ -323,6 +323,24 @@ export default function SettingsPage() {
                             setting={img}
                             isSelected={selectedKey === key && selectedImageType}
                             onChange={(updated) => setImageElements((prev) => ({ ...prev, [key]: updated }))}
+                            onRename={(oldKey, newKey) => {
+                              setImageElements((prev) => {
+                                const next = { ...prev };
+                                next[newKey] = next[oldKey];
+                                delete next[oldKey];
+                                return next;
+                              });
+                              if (selectedKey === oldKey) setSelectedKey(newKey);
+                            }}
+                            onDelete={() => {
+                              setImageElements((prev) => {
+                                const next = { ...prev };
+                                next[newKey] = next[oldKey];
+                                delete next[oldKey];
+                                return next;
+                              });
+                              if (selectedKey === oldKey) setSelectedKey(newKey);
+                            }}
                             onDelete={() => {
                               setImageElements((prev) => {
                                 const next = { ...prev };
