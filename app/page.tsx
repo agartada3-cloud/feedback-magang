@@ -1,11 +1,12 @@
 // app/page.tsx — Homepage feedback magang & Public Certificate Verification Engine
+// Hallmark · macrostructure: Stat-Led · tone: utilitarian · anchor hue: indigo
 
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, BadgeCheck, Clock3, Search, ShieldCheck, FileText, Building2 } from "lucide-react";
+import { ArrowRight, BadgeCheck, Clock3, Search, ShieldCheck, FileText, Building2, TrendingUp, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 
@@ -31,114 +32,143 @@ export default function Home() {
         <span>Sistem Feedback & Generator Sertifikat Resmi</span>
       </div>
 
-      {/* Hero Section */}
-      <section className="flex flex-1 flex-col items-center justify-center px-6 pt-16 pb-12 text-center">
-        <Reveal>
-          <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground shadow-xs">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            Program Magang / Penelitian / PKL
-          </p>
-        </Reveal>
+      {/* Hero — Stat-Led: giant number IS the hook */}
+      <section className="flex flex-1 flex-col justify-center px-6 pt-20 pb-16 sm:pt-28 sm:pb-20">
+        <div className="mx-auto w-full max-w-4xl">
+          <Reveal>
+            <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Program Magang / Penelitian / PKL
+            </p>
+          </Reveal>
 
-        <Reveal delay={0.08}>
-          <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl">
-            Bagikan pengalaman magang Anda di PG Djatiroto
-          </h1>
-        </Reveal>
+          <Reveal delay={0.08}>
+            <h1 className="text-5xl font-bold leading-none tracking-tight text-foreground sm:text-6xl md:text-7xl">
+              <span className="block text-muted-foreground">Bagikan pengalaman</span>
+              <span className="block text-foreground">magang Anda</span>
+            </h1>
+          </Reveal>
 
-        <Reveal delay={0.16}>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Isi feedback singkat dalam ±2 menit. Data Anda digunakan untuk evaluasi program & penerbitan sertifikat resmi.
-          </p>
-        </Reveal>
+          <Reveal delay={0.16}>
+            <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+              Feedback Anda membantu kami meningkatkan program magang di PG Djatiroto. 
+              Isi form, dapatkan sertifikat resmi dengan QR code verifikasi.
+            </p>
+          </Reveal>
 
-        <Reveal delay={0.24}>
-          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
-            <Link
-              href="/feedback"
-              className="inline-flex h-12 min-h-[44px] items-center gap-2 rounded-xl bg-primary px-6 text-base font-semibold text-primary-foreground shadow-md transition-all hover:bg-primary-hover hover:shadow-lg active:scale-[0.98]"
-            >
-              Isi Formulir Feedback
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
-            <Link
-              href="/admin/login"
-              className="inline-flex h-12 min-h-[44px] items-center rounded-xl border border-border bg-card px-5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              Portal Admin
-            </Link>
-          </div>
-        </Reveal>
-
-        {/* Public Certificate Verification Search Box */}
-        <Reveal delay={0.32}>
-          <div className="mt-12 w-full max-w-xl rounded-2xl border border-emerald-200 bg-white p-5 shadow-lg dark:border-emerald-900/50 dark:bg-zinc-900/90">
-            <div className="mb-3 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                <ShieldCheck className="h-4 w-4" /> Verifikasi Keaslian Sertifikat
-              </div>
-              <span className="text-[11px] text-muted-foreground">Pencarian Publik</span>
-            </div>
-
-            <form onSubmit={handleVerify} className="flex flex-col gap-2 sm:flex-row">
-              <div className="relative flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={refInput}
-                  onChange={(e) => setRefInput(e.target.value)}
-                  placeholder="No. Referensi (contoh: FDBK-20260331-001)"
-                  className="h-11 w-full rounded-xl border border-border bg-background pl-9 pr-3 text-xs font-mono font-medium text-foreground outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                />
-              </div>
+          <Reveal delay={0.24}>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link
+                href="/feedback"
+                className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+              >
+                Isi Form Feedback
+                <ArrowRight className="h-4 w-4" />
+              </Link>
               <button
-                type="submit"
-                className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-5 text-xs font-semibold text-white transition hover:bg-emerald-700 active:scale-[0.98]"
+                onClick={() => document.getElementById("verify")?.scrollIntoView({ behavior: "smooth" })}
+                className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-5 py-3 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
               >
                 <ShieldCheck className="h-4 w-4" />
-                Cek Keaslian
+                Verifikasi Sertifikat
               </button>
-            </form>
-          </div>
-        </Reveal>
+            </div>
+          </Reveal>
+        </div>
       </section>
 
-      {/* Feature Cards */}
-      <Stagger className="mx-auto grid w-full max-w-4xl gap-4 px-6 pb-20 sm:grid-cols-3">
-        <StaggerItem>
-          <Card className="h-full transition-shadow hover:shadow-md">
-            <CardContent className="space-y-2 pt-5">
-              <Clock3 className="h-5 w-5 text-primary" aria-hidden />
-              <p className="text-sm font-semibold text-foreground">±2 Menit Singkat</p>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Formulir 3 langkah mudah — cepat, tidak bertele-tele.
+      {/* Stats Row — supporting data */}
+      <section className="border-y border-border/60 bg-card/40 px-6 py-12">
+        <div className="mx-auto max-w-4xl">
+          <Stagger className="grid gap-6 sm:grid-cols-3">
+            <StaggerItem>
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-950/40">
+                  <FileText className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-semibold text-foreground">3 menit</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Waktu pengisian form</p>
+                </div>
+              </div>
+            </StaggerItem>
+            <StaggerItem>
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-950/40">
+                  <BadgeCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-semibold text-foreground">Otomatis</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Sertifikat langsung terbit</p>
+                </div>
+              </div>
+            </StaggerItem>
+            <StaggerItem>
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-950/40">
+                  <ShieldCheck className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-semibold text-foreground">QR Code</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Verifikasi anti-palsu</p>
+                </div>
+              </div>
+            </StaggerItem>
+          </Stagger>
+        </div>
+      </section>
+
+      {/* Verification Section */}
+      <section id="verify" className="px-6 py-16">
+        <div className="mx-auto max-w-2xl">
+          <Reveal>
+            <div className="text-center">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                Verifikasi Keaslian Sertifikat
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Masukkan nomor referensi sertifikat untuk memeriksa keasliannya
               </p>
-            </CardContent>
-          </Card>
-        </StaggerItem>
-        <StaggerItem>
-          <Card className="h-full transition-shadow hover:shadow-md">
-            <CardContent className="space-y-2 pt-5">
-              <BadgeCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-hidden />
-              <p className="text-sm font-semibold text-foreground">Sertifikat Otomatis</p>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Nama & program sesuai surat kampus di-generate instant.
-              </p>
-            </CardContent>
-          </Card>
-        </StaggerItem>
-        <StaggerItem>
-          <Card className="h-full transition-shadow hover:shadow-md">
-            <CardContent className="space-y-2 pt-5">
-              <ShieldCheck className="h-5 w-5 text-indigo-600 dark:text-indigo-400" aria-hidden />
-              <p className="text-sm font-semibold text-foreground">Verifikasi Sah Publik</p>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Cek keaslian sertifikat kapan saja via kode referensi.
-              </p>
-            </CardContent>
-          </Card>
-        </StaggerItem>
-      </Stagger>
+            </div>
+          </Reveal>
+
+          <Reveal delay={0.1}>
+            <form onSubmit={handleVerify} className="mt-6">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={refInput}
+                    onChange={(e) => setRefInput(e.target.value)}
+                    placeholder="Contoh: FDBK-20260808-001"
+                    className="h-12 w-full rounded-lg border border-input bg-card pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="h-12 rounded-lg bg-indigo-600 px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                >
+                  Cek
+                </button>
+              </div>
+            </form>
+          </Reveal>
+
+          <Reveal delay={0.18}>
+            <p className="mt-4 text-center text-xs text-muted-foreground">
+              Atau scan QR code yang tertera di sertifikat Anda
+            </p>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-border/60 bg-card/40 px-6 py-8">
+        <div className="mx-auto max-w-4xl text-center text-xs text-muted-foreground">
+          <p>© 2026 PT Sinergi Gula Nusantara — Pabrik Gula Djatiroto</p>
+          <p className="mt-1">Sistem Feedback & Sertifikat Magang v1.0</p>
+        </div>
+      </footer>
     </main>
   );
 }
