@@ -300,11 +300,21 @@ export default function SettingsPage() {
             <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
               <div className="space-y-6">
                 {/* Image Elements Cards */}
-                {Object.keys(imageElements).length > 0 && (
-                  <div className="space-y-3">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
                       Elemen Gambar (TTD, Stempel, Logo, QR)
                     </h3>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 transition hover:bg-amber-100 disabled:opacity-50 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+                    >
+                      {uploading ? "Uploading..." : "+ Upload Gambar"}
+                    </button>
+                  </div>
+                  {Object.keys(imageElements).length > 0 && (
                     <div className="grid gap-4 sm:grid-cols-2">
                       {Object.entries(imageElements).map(([key, img]) => (
                         <div key={key} onClick={() => { setSelectedKey(key); setSelectedImageType(true); }}>
@@ -325,8 +335,8 @@ export default function SettingsPage() {
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {/* Text Elements Cards */}
                 <div className="space-y-3">
