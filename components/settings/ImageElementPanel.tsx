@@ -173,7 +173,8 @@ export function ImageElementPanel({
           <input
             type="number"
             value={setting.width}
-            onChange={(e) => onChange({ ...setting, width: Math.max(10, Number(e.target.value)) })}
+            onChange={(e) => onChange({ ...setting, width: Number(e.target.value) || 10 })}
+            onBlur={(e) => { const v = Math.max(10, Number(e.target.value) || 10); if (v !== setting.width) onChange({ ...setting, width: v }); }}
             className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-900 outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           />
         </label>
@@ -182,7 +183,8 @@ export function ImageElementPanel({
           <input
             type="number"
             value={setting.height}
-            onChange={(e) => onChange({ ...setting, height: Math.max(10, Number(e.target.value)) })}
+            onChange={(e) => onChange({ ...setting, height: Number(e.target.value) || 10 })}
+            onBlur={(e) => { const v = Math.max(10, Number(e.target.value) || 10); if (v !== setting.height) onChange({ ...setting, height: v }); }}
             className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-900 outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           />
         </label>
