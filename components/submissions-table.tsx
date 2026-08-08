@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Download, Pencil, Search, Settings, Trash2 } from "lucide-react";
+import { Download, Search, Settings, Trash2, Check, CheckCircle2, X } from "lucide-react";
 import { Badge, Button, Card, CardContent, EmptyState, Input, Select } from "@/components/ui";
 import { DatePicker, MonthPicker } from "@/components/date-picker";
 import { deleteSubmissions, listSubmissions } from "@/lib/store";
@@ -102,11 +102,15 @@ export default function SubmissionsTable() {
 
   function toggleSelectAll() {
     setSelected((prev) => {
-      if (prev.size === pageRows.length && pageRows.every((r) => prev.has(r.id))) {
-        return new Set();
-      }
-      return new Set(pageRows.map((r) => r.id));
+      const pageIds = pageRows.map((r) => r.id);
+      const allSelected = pageRows.length > 0 && pageIds.every((id) => prev.has(id));
+      if (allSelected) return new Set();
+      return new Set(pageIds);
     });
+  }
+
+  function clearSelection() {
+    setSelected(new Set());
   }
 
   const [downloadingZip, setDownloadingZip] = React.useState(false);
@@ -174,6 +178,7 @@ export default function SubmissionsTable() {
   }
 
   const filterActive = query || jenis || bagian || status || rating || bulan || from || to;
+  const hasSelection = selected.size > 0;
 
   return (
     <div className="space-y-4">
@@ -189,30 +194,6 @@ export default function SubmissionsTable() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {selected.size > 0 && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBatchZipDownload}
-                loading={downloadingZip}
-                className="min-h-[40px] border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
-              >
-                <Download className="h-4 w-4" aria-hidden />
-                {downloadingZip ? "Memproses ZIP..." : `Download Batch ZIP (${selected.size})`}
-              </Button>
-
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setConfirmDelete(true)}
-                className="min-h-[40px]"
-              >
-                <Trash2 className="h-4 w-4" aria-hidden />
-                Hapus ({selected.size})
-              </Button>
-            </>
-          )}
           <Button variant="outline" onClick={exportCsv} disabled={!filtered.length}>
             <Download className="h-4 w-4" aria-hidden />
             Export CSV
@@ -263,18 +244,9 @@ export default function SubmissionsTable() {
       {/* Table */}
       <Card>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[860px] text-left text-sm">
+          <table className="w-full min-w-[760px] text-left text-sm">
             <thead>
               <tr className="border-b border-border text-xs text-muted-foreground">
-                <th className="w-10 px-3 py-3">
-                  <input
-                    type="checkbox"
-                    checked={pageRows.length > 0 && selected.size === pageRows.length}
-                    onChange={toggleSelectAll}
-                    aria-label="Pilih semua di halaman ini"
-                    className="h-4 w-4 accent-primary"
-                  />
-                </th>
                 {[
                   { key: "ref", label: "No. Ref" },
                   { key: "createdAt", label: "Tanggal" },
@@ -297,20 +269,19 @@ export default function SubmissionsTable() {
                     </button>
                   </th>
                 ))}
-                <th className="w-20 px-4 py-3 text-right font-medium">Aksi</th>
+                <th className="w-16 px-4 py-3 text-right font-medium">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {pageRows.map((s) => (
-                <tr key={s.id} className={cn("group border-b border-border/60 transition-colors last:border-0 hover:bg-muted/50 cursor-pointer", selected.has(s.id) && "bg-primary/5")} onClick={() => toggleSelect(s.id)}>
-                  <td className="px-3 py-3">
-                    <input
-                      type="checkbox"
-                      checked={selected.has(s.id)}
-                      readOnly
-                      className="h-4 w-4 accent-primary pointer-events-none"
-                    />
-                  </td>
+                <tr
+                  key={s.id}
+                  className={cn(
+                    "group border-b border-border/60 transition-colors last:border-0 hover:bg-muted/50 cursor-pointer",
+                    selected.has(s.id) && "bg-primary/5"
+                  )}
+                  onClick={() => toggleSelect(s.id)}
+                >
                   <td className="px-4 py-3">
                     <Link href={`/admin/submissions/${s.id}`} className="font-mono text-xs font-medium text-primary hover:underline">
                       {s.ref}
@@ -326,20 +297,21 @@ export default function SubmissionsTable() {
                     <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                       <Link
                         href={`/admin/submissions/${s.id}`}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                         aria-label={`Edit ${s.ref}`}
                       >
-                        <Settings className="h-3.5 w-3.5" aria-hidden />
+                        <Settings className="h-4 w-4" aria-hidden />
                       </Link>
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelected(new Set([s.id]));
                           setConfirmDelete(true);
                         }}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-error/10 hover:text-error"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-error/10 hover:text-error"
                         aria-label={`Hapus ${s.ref}`}
                       >
-                        <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                        <Trash2 className="h-4 w-4" aria-hidden />
                       </button>
                     </div>
                   </td>
@@ -367,6 +339,54 @@ export default function SubmissionsTable() {
           </div>
         )}
       </Card>
+
+      {/* Floating Action Bar - appears when items selected */}
+      {hasSelection && (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-50 md:static md:relative md:z-auto md:bottom-auto md:left-auto md:right-auto"
+          role="toolbar"
+          aria-label="Batch actions"
+        >
+          <div className="mx-auto max-w-screen-2xl px-4 pb-4 md:p-0 md:mx-0 md:flex md:items-center md:justify-end md:gap-2 md:border-t md:border-border md:bg-card/95 md:backdrop-blur supports-[backdrop-filter]:bg-card/60">
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <span className="hidden sm:inline-flex items-center text-sm font-medium text-foreground">
+                {selected.size} dipilih
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearSelection}
+                className="hidden sm:inline-flex min-h-[40px]"
+                aria-label="Batal pilih"
+              >
+                <X className="h-4 w-4" aria-hidden />
+                Batal
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBatchZipDownload}
+                loading={downloadingZip}
+                className="min-h-[40px] flex-1 sm:flex-none border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+              >
+                <Download className="h-4 w-4" aria-hidden />
+                <span className="hidden sm:inline">{downloadingZip ? "Memproses ZIP..." : `Download ZIP (${selected.size})`}</span>
+                <span className="sm:hidden">{selected.size}</span>
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setConfirmDelete(true)}
+                className="min-h-[40px] flex-1 sm:flex-none"
+              >
+                <Trash2 className="h-4 w-4" aria-hidden />
+                <span className="hidden sm:inline">Hapus ({selected.size})</span>
+                <span className="sm:hidden">{selected.size}</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Konfirmasi hapus */}
       {confirmDelete && (
